@@ -1,6 +1,6 @@
 {
   "name": "@repodrift/cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Local-first repository health, security, dependency, and code analysis CLI",
   "license": "MIT",
   "type": "module",
