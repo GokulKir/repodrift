@@ -1,15 +1,20 @@
 {
   "name": "repodrift",
   "version": "0.1.0",
-  "description": "AI-powered repository analysis CLI",
+  "description": "Local-first repository health, security, dependency, and code analysis CLI",
   "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "bin": {
-    "repodrift": "./dist/index.js"
+    "repodrift": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "test": "tsx --test test/**/*.test.ts"
+    "test": "tsx --test test/**/*.test.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "chalk": "^6.0.0",
