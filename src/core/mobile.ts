@@ -199,6 +199,36 @@ function scanAndroidHealth(root: string, framework: string): MobileHealthReport 
     });
   }
 
+  if (!/signingConfigs|storeFile|keyAlias|storePassword|keyPassword/i.test(gradleText) && !/android:debuggable="true"/i.test(manifestText)) {
+    findings.push({
+      id: "android.release-signing-missing",
+      severity: "high",
+      title: "Android release signing config is missing",
+      description: "The app does not appear to define a release signing configuration, which can block secure release builds and produce mis-signed artifacts.",
+      file: buildGradlePath ?? "android/app/build.gradle",
+      remediation: "Define a release signingConfig with storeFile, storePassword, keyAlias, and keyPassword, and enforce it in the release buildType.",
+      confidence: 0.9,
+    });
+    checks.push({ name: "Signing configuration", status: "warn", detail: "No release signing configuration was detected in the Android build files." });
+  } else {
+    checks.push({ name: "Signing configuration", status: "pass", detail: "Android release signing configuration appears to be defined." });
+  }
+
+  if (/android:usesCleartextTraffic="true"|usesCleartextTraffic\s*\)|usesCleartextTraffic\s*=/i.test(manifestText) || /android:allowBackup="true"/i.test(manifestText)) {
+    findings.push({
+      id: "android.cleartext-traffic",
+      severity: "medium",
+      title: "Insecure Android networking or backup defaults",
+      description: "The manifest enables cleartext HTTP traffic or backup behavior that may broaden the attack surface for release builds.",
+      file: manifestPath ?? "AndroidManifest.xml",
+      remediation: "Disable cleartext traffic for production builds and review backup settings to ensure only approved data is backed up.",
+      confidence: 0.82,
+    });
+    checks.push({ name: "Network/backup defaults", status: "warn", detail: "Cleartext traffic or backup defaults may be too permissive for production." });
+  } else {
+    checks.push({ name: "Network/backup defaults", status: "pass", detail: "Network and backup defaults appear aligned with a secure release posture." });
+  }
+
   const dependencySignal = detectDependencySignal(root, framework);
   if (dependencySignal) {
     findings.push(dependencySignal);

@@ -61,6 +61,14 @@ describe("repository analyzers", () => {
     assert.equal(result.findings[0]?.id, "dependencies.deprecated:legacy");
   });
 
+  it("ignores the default React Native debug keystore", () => {
+    const root = fixture();
+    fs.mkdirSync(path.join(root, "android", "app"), { recursive: true });
+    fs.writeFileSync(path.join(root, "android", "app", "debug.keystore"), "fake-keystore-data");
+    const result = scanSecurity(root, ["android/app/debug.keystore"]);
+    assert.equal(result.findings.length, 0);
+  });
+
   it("calculates deterministic weighted health scores", () => {
     const finding: Finding = { id: "x", category: "security", severity: "high", title: "x", description: "x", remediation: "x", confidence: 1 };
     const first = calculateHealthScore([finding], true);
@@ -101,5 +109,25 @@ describe("repository analyzers", () => {
     assert.equal(result.framework, "React Native");
     assert.ok(result.score >= 70);
     assert.ok(result.findings.some((finding) => finding.title.includes("Debuggable release")) || result.findings.some((finding) => finding.title.includes("exported")));
+  });
+
+  it("flags missing Android release signing configuration", () => {
+    const root = fixture();
+    fs.mkdirSync(path.join(root, "android", "app", "src", "main"), { recursive: true });
+    fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "demo", dependencies: { "react-native": "0.74.0" } }));
+    fs.writeFileSync(path.join(root, "android", "app", "build.gradle"), `
+        android {
+          compileSdk 34
+          targetSdk 34
+          minSdk 21
+        }
+    `);
+    fs.writeFileSync(path.join(root, "android", "app", "src", "main", "AndroidManifest.xml"), `
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <application android:allowBackup="true" android:usesCleartextTraffic="true" />
+        </manifest>
+    `);
+    const result = scanMobileHealth(root);
+    assert.ok(result.findings.some((finding) => finding.id === "android.release-signing-missing"));
   });
 });

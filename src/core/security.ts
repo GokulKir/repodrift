@@ -254,6 +254,12 @@ function createFinding(rule: SecurityRule, file: string, line: number, confidenc
 	};
 }
 
+function isIgnoredSecretFile(relative: string): boolean {
+	const normalized = relative.replace(/\\/g, "/");
+	const baseName = normalized.split("/").pop() ?? normalized;
+	return /(^|\/)debug\.keystore$/i.test(normalized) || /^debug\.keystore$/i.test(baseName);
+}
+
 export function scanSecurity(root: string, files: string[]): SecuritySummary {
 	const findings: Finding[] = [];
 	let scannedFiles = 0;
@@ -275,8 +281,12 @@ export function scanSecurity(root: string, files: string[]): SecuritySummary {
 			continue;
 		}
 
+		if (isIgnoredSecretFile(relative)) {
+			continue;
+		}
+
 		// Check for common secret file patterns
-		if (/\.pem|\.key|\.cert|secrets?\.(?:json|yaml|yml|txt)|keystore\.jks|\.pgp|\.gpg/i.test(relative)) {
+		if (/\.pem|\.cert|secrets?\.(?:json|yaml|yml|txt)|keystore\.jks|\.pgp|\.gpg/i.test(relative) || /(^|\/)[^\/]+\.key$/i.test(relative)) {
 			findings.push({
 				id: `security.secret-file:${relative}`,
 				category: "security",
@@ -303,6 +313,7 @@ export function scanSecurity(root: string, files: string[]): SecuritySummary {
 		if (content.length > 2_000_000) continue;
 
 		const lines = content.split("\n");
+		const reportedLines = new Set<number>();
 
 		// Apply all security rules
 		const allRules = [...CREDENTIAL_RULES, ...CODE_PATTERN_RULES, ...INSECURE_PRACTICE_RULES, ...MISSING_SECURITY_HEADERS];
@@ -321,6 +332,9 @@ export function scanSecurity(root: string, files: string[]): SecuritySummary {
 			alreadyReported.add(ruleKey);
 
 			const lineNumber = searchContent.slice(0, match.index).split("\n").length;
+			if (reportedLines.has(lineNumber)) continue;
+			reportedLines.add(lineNumber);
+
 			findings.push(createFinding(rule, relative, lineNumber, rule.confidence));
 		}
 	}
