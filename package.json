@@ -1,6 +1,6 @@
 {
   "name": "repodrift",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first repository health, security, dependency, and code analysis CLI",
   "type": "module",
   "files": [
