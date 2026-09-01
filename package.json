@@ -1,11 +1,14 @@
 {
-  "name": "repodrift",
+  "name": "@repodrift/cli",
   "version": "0.1.1",
   "description": "Local-first repository health, security, dependency, and code analysis CLI",
+  "license": "MIT",
   "type": "module",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "docs/images/repodrift-banner.svg"
   ],
   "bin": {
     "repodrift": "dist/index.js"
@@ -20,6 +23,7 @@
     "chalk": "^6.0.0",
     "commander": "^14.0.0",
     "ora": "^9.4.1",
+    "package-name": "^0.1.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {

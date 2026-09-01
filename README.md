@@ -1,5 +1,7 @@
 # RepoDrift
 
+![RepoDrift repository intelligence](docs/images/repodrift-banner.svg)
+
 RepoDrift is a local-first repository intelligence CLI for developers. It analyzes a project before development or deployment and reports repository health, dependencies, security patterns, Git status, code metrics, and actionable findings.
 
 > Current release: Phase 1 local analysis. AI explanations and a remote API are planned, but are not enabled yet.
@@ -17,6 +19,12 @@ Install and build:
 npm install
 npm run build
 npm link
+```
+
+Install the published CLI:
+
+```bash
+npm install -g @repodrift/cli
 ```
 
 Scan the current repository:
@@ -114,7 +122,11 @@ repodrift/
 │       └── prompts.ts           # Future prompt definitions
 ├── test/
 │   └── core.test.ts             # Analyzer and scoring tests
+├── docs/
+│   └── images/
+│       └── repodrift-banner.svg  # Original project banner
 ├── dist/                        # TypeScript build output
+├── LICENSE                      # MIT license
 ├── package.json
 ├── package-lock.json
 └── tsconfig.json
@@ -159,4 +171,4 @@ repodrift scan --json --fail-on high
 
 ## License
 
-ISC
+MIT
