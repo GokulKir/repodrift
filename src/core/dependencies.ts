@@ -21,10 +21,12 @@ export function analyzeDependencies(root: string, options: { audit?: boolean } =
 		if (options.audit && lockfiles.includes("package-lock.json")) findings.push(...npmAudit(root));
 		return { manifest: "package.json", total: production + development, production, development, lockfiles, findings };
 	} catch {
-		return { manifest: "package.json", total: 0, production: 0, development: 0, lockfiles, findings: [{
-			id: "dependencies.invalid-manifest", category: "dependencies", severity: "high", title: "Invalid package manifest",
-			description: "package.json could not be parsed as JSON.", file: "package.json", remediation: "Fix the JSON syntax in package.json.", confidence: 1
-		}] };
+		return {
+			manifest: "package.json", total: 0, production: 0, development: 0, lockfiles, findings: [{
+				id: "dependencies.invalid-manifest", category: "dependencies", severity: "high", title: "Invalid package manifest",
+				description: "package.json could not be parsed as JSON.", file: "package.json", remediation: "Fix the JSON syntax in package.json.", confidence: 1
+			}]
+		};
 	}
 }
 

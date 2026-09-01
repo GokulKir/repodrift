@@ -4,6 +4,7 @@ import { analyzeGit } from "./git.js";
 import { calculateMetrics, qualityFindings } from "./metrics.js";
 import { scanRepository } from "./scanner.js";
 import { scanSecurity } from "./security.js";
+import { detectFrameworks, scanNextJsSecurity, scanReactSecurity, scanReactNativeIosSecurity, scanNodeJsSecurity } from "./framework-security.js";
 import type { Finding, HealthScore, RepositoryAnalysis } from "./types.js";
 
 export function calculateHealthScore(findings: Finding[], gitAvailable: boolean): HealthScore {
@@ -21,6 +22,25 @@ export function analyzeRepository(inputPath: string, options: { audit?: boolean 
   const git = analyzeGit(root);
   const complexity = calculateMetrics(root, files.files);
   const codeQuality = qualityFindings(complexity);
-  const findings = [...security.findings, ...dependencies.findings, ...codeQuality];
-  return { repository: { path: root, name: path.basename(root) }, files, dependencies, security, git, codeQuality: { findings: codeQuality }, complexity, technicalDebt: { findings: codeQuality }, score: calculateHealthScore(findings, git.isRepository), findings };
+  
+  // Detect frameworks and scan for framework-specific issues
+  const frameworks = detectFrameworks(root);
+  let frameworkFindings: Finding[] = [];
+  
+  for (const framework of frameworks) {
+    if (framework.framework === "next") {
+      frameworkFindings.push(...scanNextJsSecurity(root, files.files));
+    } else if (framework.framework === "react") {
+      frameworkFindings.push(...scanReactSecurity(root, files.files));
+    } else if (framework.framework === "react-native") {
+      frameworkFindings.push(...scanReactNativeIosSecurity(root, files.files));
+    } else if (framework.framework === "ios") {
+      frameworkFindings.push(...scanReactNativeIosSecurity(root, files.files));
+    } else if (framework.framework === "express" || framework.framework === "nestjs") {
+      frameworkFindings.push(...scanNodeJsSecurity(root, files.files));
+    }
+  }
+  
+  const findings = [...security.findings, ...dependencies.findings, ...codeQuality, ...frameworkFindings];
+  return { repository: { path: root, name: path.basename(root) }, files, dependencies, security: { ...security, findings: [...security.findings, ...frameworkFindings] }, git, codeQuality: { findings: codeQuality }, complexity, technicalDebt: { findings: codeQuality }, score: calculateHealthScore(findings, git.isRepository), findings };
 }
