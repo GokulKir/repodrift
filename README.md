@@ -1,6 +1,14 @@
 # RepoDrift
 
-![RepoDrift repository intelligence](docs/images/repodrift-banner.svg)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GokulKir/repodrift/main/docs/images/repodrift-banner.svg" alt="RepoDrift repository intelligence" width="900">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@repodrift/cli"><img src="https://img.shields.io/npm/v/@repodrift/cli?color=16a34a&label=npm" alt="npm version"></a>
+  <a href="https://github.com/GokulKir/repodrift/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-38bdf8" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/security-local--first-f97316" alt="local-first security">
+</p>
 
 RepoDrift is a local-first repository intelligence CLI for developers. It analyzes a project before development or deployment and reports repository health, dependencies, security patterns, Git status, code metrics, and actionable findings.
 
