@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { analyzeDependencies } from "../src/core/dependencies.js";
 import { calculateHealthScore } from "../src/core/engine.js";
+import { scanMobileHealth } from "../src/core/mobile.js";
 import { scanRepository } from "../src/core/scanner.js";
 import { scanSecurity } from "../src/core/security.js";
 import type { Finding } from "../src/core/types.js";
@@ -67,5 +68,38 @@ describe("repository analyzers", () => {
     assert.deepEqual(first, second);
     assert.equal(first.score, 90);
     assert.equal(first.grade, "A");
+  });
+
+  it("detects android mobile health and scores platform-specific findings", () => {
+    const root = fixture();
+    fs.mkdirSync(path.join(root, "android", "app", "src", "main"), { recursive: true });
+    fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "demo", dependencies: { "react-native": "0.74.0" } }));
+    fs.writeFileSync(path.join(root, "android", "build.gradle"), `
+        buildscript {
+          ext.kotlin_version = '1.9.22'
+          dependencies { classpath 'com.android.tools.build:gradle:8.1.1' }
+        }
+        allprojects { repositories { google(); mavenCentral() } }
+    `);
+    fs.writeFileSync(path.join(root, "android", "app", "build.gradle"), `
+        android {
+          compileSdk 34
+          targetSdk 34
+          minSdk 21
+        }
+    `);
+    fs.writeFileSync(path.join(root, "android", "app", "src", "main", "AndroidManifest.xml"), `
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <uses-permission android:name="android.permission.CAMERA" />
+          <application android:debuggable="true">
+            <activity android:name=".MainActivity" android:exported="true" />
+          </application>
+        </manifest>
+    `);
+    const result = scanMobileHealth(root);
+    assert.equal(result.platform, "android");
+    assert.equal(result.framework, "React Native");
+    assert.ok(result.score >= 70);
+    assert.ok(result.findings.some((finding) => finding.title.includes("Debuggable release")) || result.findings.some((finding) => finding.title.includes("exported")));
   });
 });

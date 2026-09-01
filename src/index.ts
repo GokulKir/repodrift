@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import { analyzeRepository } from './core/engine.js';
+import { scanMobileHealth } from './core/mobile.js';
 import type { Finding, Severity } from './core/types.js';
 
 const program = new Command();
@@ -41,6 +42,34 @@ program
     }
   });
 
+const mobileCommand = new Command("mobile");
+mobileCommand
+  .description("Scan a mobile app project")
+  .addHelpCommand(false);
+
+mobileCommand
+  .command("scan")
+  .description("Scan a mobile app project")
+  .argument("[path]", "Mobile project path", ".")
+  .option("--json", "Output machine-readable JSON")
+  .action((inputPath: string, options: { json?: boolean }) => {
+    const spinner = options.json ? null : ora("Detecting mobile project and scanning health...").start();
+    try {
+      const analysis = scanMobileHealth(inputPath);
+      spinner?.stop();
+      if (options.json) {
+        console.log(JSON.stringify(analysis, null, 2));
+      } else {
+        printMobileReport(analysis);
+      }
+    } catch (error) {
+      spinner?.fail("Mobile scan failed");
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program.addCommand(mobileCommand);
 program.parse();
 
 function printReport(analysis: ReturnType<typeof analyzeRepository>, verbose: boolean): void {
@@ -53,6 +82,28 @@ function printReport(analysis: ReturnType<typeof analyzeRepository>, verbose: bo
   if (verbose) console.log(`\nLines of code: ${analysis.complexity.linesOfCode}\nGit: ${analysis.git.isRepository ? `${analysis.git.branch}, ${analysis.git.commitCount} commits` : "unavailable"}`);
   printFindings(analysis.findings);
   console.log(chalk.gray("\nRun `repodrift scan --json` for CI integration."));
+}
+
+function printMobileReport(analysis: ReturnType<typeof scanMobileHealth>): void {
+  console.log(`\n${chalk.bold.cyan("RepoDrift")} ${chalk.gray("Mobile Health")}`);
+  console.log(`\nPlatform       ${analysis.platform === "unknown" ? "Unknown" : analysis.platform.charAt(0).toUpperCase() + analysis.platform.slice(1)}`);
+  console.log(`Framework      ${analysis.framework}`);
+  console.log(`Health Score   ${chalk.bold(`${analysis.score} / 100`)}`);
+  console.log(`Grade          ${chalk.bold(analysis.grade)}`);
+  console.log("");
+
+  for (const check of analysis.checks) {
+    const status = check.status === "pass" ? chalk.green("✓") : check.status === "warn" ? chalk.yellow("⚠") : chalk.red("✕");
+    console.log(`${status} ${check.name}: ${check.detail}`);
+  }
+
+  if (analysis.findings.length) {
+    console.log("\nIssues:");
+    for (const finding of analysis.findings.slice(0, 10)) {
+      const severity = finding.severity === "high" || finding.severity === "critical" ? chalk.red : finding.severity === "medium" ? chalk.yellow : chalk.gray;
+      console.log(`${severity(finding.severity.toUpperCase())} ${finding.title}`);
+    }
+  }
 }
 
 function printFindings(findings: Finding[]): void {

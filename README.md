@@ -47,6 +47,13 @@ Scan another repository:
 repodrift scan ./my-project
 ```
 
+Run a mobile app health check for Android or iOS:
+
+```bash
+repodrift mobile scan ./my-mobile-app
+repodrift mobile scan --json ./my-mobile-app
+```
+
 ## Commands and Options
 
 ```bash
@@ -55,6 +62,8 @@ repodrift scan --verbose       # Include Git and code metrics
 repodrift scan --json          # Machine-readable JSON
 repodrift scan --local-only    # Never run network-backed dependency audit
 repodrift scan --fail-on high  # Exit non-zero for high or critical findings
+repodrift mobile scan          # Android/iOS project health analysis
+repodrift mobile scan --json   # Machine-readable mobile findings
 ```
 
 The same command can be run during development without linking:
